@@ -1,5 +1,3 @@
-// Existing JavaScript logic
-
 // Smooth Scroll for navigation links
 document.querySelectorAll('nav a').forEach(anchor => {
   anchor.addEventListener('click', function(e) {
@@ -36,14 +34,30 @@ document.getElementById('reportForm').addEventListener('submit', function(e) {
   e.preventDefault();
 
   // Get form data
-  const name = document.getElementById('name').value;
-  const email = document.getElementById('email').value;
-  const threatType = document.getElementById('threat-type').value;
-  const description = document.getElementById('description').value;
+  const name = document.getElementById('name').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const threatType = document.getElementById('threat-type').value.trim();
+  const description = document.getElementById('description').value.trim();
+
+  // Basic form validation
+  if (!name || !email || !threatType || !description) {
+    alert("Please fill out all the fields.");
+    return; // Prevent form submission if validation fails
+  }
+
+  // Optional: Validate email format
+  const emailPattern = /^[^ ]+@[^ ]+\.[a-z]{2,3}$/;
+  if (!emailPattern.test(email)) {
+    alert("Please enter a valid email address.");
+    return;
+  }
+
+  // Show loading message (optional, user feedback)
+  alert("Sending your report...");
 
   // Telegram Bot API token and chat ID
-  const botToken = '8183385081:AAHmYIGLZ02avISpd5MfEvKbeUt21FNxHYg'; // Replace with your bot token
-  const chatId = '7747025007'; // Replace with your chat ID
+  const botToken = 'YOUR_BOT_TOKEN'; // Keep this secure by using a backend service
+  const chatId = 'YOUR_CHAT_ID'; // Replace with your chat ID
 
   // Create the message to send to Telegram
   const message = `New Threat Report:\n\nName: ${name}\nEmail: ${email}\nType of Threat: ${threatType}\nDescription: ${description}`;
@@ -63,6 +77,6 @@ document.getElementById('reportForm').addEventListener('submit', function(e) {
     })
     .catch(error => {
       console.error('Error:', error);
-      alert('An error occurred. Please try again.');
+      alert('An error occurred while sending your report. Please try again.');
     });
 });
