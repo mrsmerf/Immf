@@ -56,8 +56,62 @@
   <p><a href="https://t.me/immfreport" target="_blank">Join Our Telegram</a></p>
 </footer>
 
-<!-- Link to external JavaScript file -->
-<script src="scripts.js"></script>
+<script>
+// Form submission handling (for the "Report a Threat" form)
+document.getElementById('reportForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+
+  // Get form data
+  const name = document.getElementById('name').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const threatType = document.getElementById('threat-type').value.trim();
+  const description = document.getElementById('description').value.trim();
+
+  // Basic form validation
+  if (!name || !email || !threatType || !description) {
+    alert("Please fill out all the fields.");
+    return; // Prevent form submission if validation fails
+  }
+
+  // Optional: Validate email format
+  const emailPattern = /^[^ ]+@[^ ]+\.[a-z]{2,3}$/;
+  if (!emailPattern.test(email)) {
+    alert("Please enter a valid email address.");
+    return;
+  }
+
+  // Show loading message (optional, user feedback)
+  alert("Sending your report...");
+
+  // Telegram Bot API token and chat ID
+  const botToken = '8183385081:AAHmYIGLZ02avISpd5MfEvKbeUt21FNxHYg'; // Your bot token
+  const chatId = '7747025007'; // Your chat ID
+
+  // Create the message to send to Telegram
+  const message = `New Threat Report:\n\nName: ${name}\nEmail: ${email}\nType of Threat: ${threatType}\nDescription: ${description}`;
+
+  // Prepare the URL to send the message
+  const url = `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`;
+
+  // Send the message via fetch
+  fetch(url)
+    .then(response => {
+      return response.json(); // Convert response to JSON
+    })
+    .then(data => {
+      console.log('Response from Telegram:', data); // Log the response for debugging
+      if (data.ok) {
+        alert('Report sent successfully!');
+      } else {
+        alert('Failed to send report. Response: ' + JSON.stringify(data)); // Show more detailed failure info
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error); // Log any errors for debugging
+      alert('An error occurred while sending your report. Please try again.');
+    });
+});
+</script>
 
 </body>
 </html>
