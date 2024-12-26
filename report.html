@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IMMF - Report a Threat</title>
+  <link rel="stylesheet" href="/styles/styles.css">
+  <!-- Add Google reCAPTCHA Script -->
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+</head>
+<body>
+
+<header>
+  <div class="logo"></div>
+  <div>
+    <h1>IMMF</h1>
+    <p>Report a Threat - Protect Lives</p>
+  </div>
+</header>
+
+<div class="container">
+  <h2>Report a Threat</h2>
+  <p>Your report is secure and confidential.</p>
+
+  <form id="reportForm">
+    <div class="form-group">
+      <label for="name">Your Name</label>
+      <input type="text" id="name" name="name" placeholder="Enter your name" required>
+    </div>
+
+    <div class="form-group">
+      <label for="email">Your Email</label>
+      <input type="email" id="email" name="email" placeholder="Enter your email" required>
+    </div>
+
+    <div class="form-group">
+      <label for="threat-type">Type of Threat</label>
+      <select id="threat-type" name="threat-type" required>
+        <option value="">Select a threat type</option>
+        <option value="physical">Physical Threat</option>
+        <option value="cyber">Cyber Threat</option>
+        <option value="social">Social Threat</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="description">Describe the Threat</label>
+      <textarea id="description" name="description" rows="5" placeholder="Provide details about the threat" required></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="policy-agreement">
+        <input type="checkbox" id="policy-agreement" name="policy-agreement" required>
+        I agree to the <a href="your-privacy-policy-link">privacy policy</a>.
+      </label>
+    </div>
+
+    <!-- Add Google reCAPTCHA widget -->
+    <div class="form-group">
+      <div class="g-recaptcha" data-sitekey="YOUR_RECAPTCHA_SITE_KEY"></div>
+    </div>
+
+    <button type="submit" class="btn">Submit Report</button>
+  </form>
+</div>
+
+<footer>
+  <p>&copy; 2024 IMMF. All rights reserved.</p>
+  <p><a href="https://t.me/immfreport" target="_blank">Join Our Telegram</a></p>
+</footer>
+
+<script>
+document.getElementById('reportForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+
+  // Check if the user has agreed to the privacy policy
+  const isAgreed = document.getElementById('policy-agreement').checked;
+  if (!isAgreed) {
+    alert("You must agree to the privacy policy to submit the report.");
+    return; // Stop form submission if not agreed
+  }
+
+  // Verify reCAPTCHA
+  const recaptchaResponse = grecaptcha.getResponse(); // Get response from reCAPTCHA widget
+  if (!recaptchaResponse) {
+    alert("Please complete the CAPTCHA to submit the form.");
+    return; // Stop form submission if reCAPTCHA verification fails
+  }
+
+  // Get form data
+  const name = document.getElementById('name').value;
+  const email = document.getElementById('email').value;
+  const threatType = document.getElementById('threat-type').value;
+  const description = document.getElementById('description').value;
+
+  // Fetch the bot token and chat ID securely from the backend
+  fetch('/get-telegram-config')
+    .then(response => response.json())
+    .then(data => {
+      const botToken = data.token;  // Get the token from the backend response
+      const chatId = data.chatId;    // Get the chat ID from the backend response
+
+      // Capture location (if available)
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+
+          // Send the data to Telegram
+          sendToTelegram(botToken, chatId, name, email, threatType, description, latitude, longitude);
+        }, function(error) {
+          console.error("Geolocation error:", error);
+          sendToTelegram(botToken, chatId, name, email, threatType, description, "Location not available", "Location not available");
+        });
+      } else {
+        console.warn("Geolocation is not supported by this browser.");
+        sendToTelegram(botToken, chatId, name, email, threatType, description, "Location not available", "Location not available");
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching token and chat ID:', error);
+      alert('An error occurred. Please try again.');
+    });
+});
+
+// Function to send data to Telegram
+function sendToTelegram(botToken, chatId, name, email, threatType, description, latitude, longitude) {
+  const message = `New Threat Report:\n\nName: ${name}\nEmail: ${email}\nType of Threat: ${threatType}\nDescription: ${description}\nLocation: Latitude: ${latitude}, Longitude: ${longitude}`;
+
+  const url = `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`;
+
+  console.log("Sending data to Telegram:", message); // Log the message for debugging
+
+  fetch(url)
+    .then(response => response.json())
+    .then(data => {
+      console.log("Telegram API response:", data);
+      if (data.ok) {
+        alert('Report sent successfully!');
+      } else {
+        alert('Failed to send report. Please try again later.');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('An error occurred. Please try again.');
+    });
+}
+</script>
+
+</body>
+</html>
